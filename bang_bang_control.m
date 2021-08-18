@@ -9,7 +9,6 @@ plotdefaults(20,6,2,'northeast')
 
 f_dyn = 100;    % [Hz] dynamics update frequency
 f_pwm = 5;      % [Hz] bang-bang pwm frequency 
-
 T_end = 10;    % [s]
 
 
@@ -19,7 +18,7 @@ B = [0; 1];
 
 % define controller
 Kp = 1;
-Kd = 1;
+Kd = 1.5;
 Ki = 1e-6;
 pos_ref = 0;
 rate_ref = 0;
@@ -28,8 +27,19 @@ pos_error_sum = 0;
 
 % define bang-bang parameters
 pulse_height = 1;
+min_duty_cycle = .2;
+max_duty_cycle = .5;
+
 initial_duty_cycle = 0;
 duty_cycle = 0;
+
+
+% satellite plot
+L1 = 2;
+L2 = .5;
+a = .25;
+b = 1;
+r = 1;
 
 i = 1;
 t = 0:(1/f_dyn):T_end;
@@ -47,7 +57,7 @@ while t(i) < T_end
         
         % bang-bang implementation
         initial_duty_cycle = (continuous_control_input + initial_duty_cycle - duty_cycle)/pulse_height;
-        duty_cycle = select_duty_cycle(initial_duty_cycle,0.1,0.5);
+        duty_cycle = select_duty_cycle(initial_duty_cycle,min_duty_cycle,max_duty_cycle);
         
     end
     
@@ -61,11 +71,12 @@ while t(i) < T_end
     %% ANIMATION
     
     if mod(t(i),3/f_dyn) < 1e-5
-        [x_sat, y_sat] = get_satellite_vertices(x(1,i),2,1);
-        [x1_th,y1_th,x2_th,y2_th] = get_thruster_vertices(u(i),x(1,i),2,1,.25,1);
+        [x_sat, y_sat] = get_satellite_vertices(x(1,i),L1,L2);
+        [x1_th,y1_th,x2_th,y2_th] = get_thruster_vertices(u(i),x(1,i),L1,L2,a,b);
         figure(1)
         fill(x_sat,y_sat,'k');
         hold on
+        fill(r*cos(0:.1:2*pi),r*sin(0:.1:2*pi),'k')
         fill(x1_th,y1_th,'r');
         fill(x2_th,y2_th,'r');
         hold off
